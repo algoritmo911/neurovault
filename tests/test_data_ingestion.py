@@ -6,12 +6,16 @@ import io
 # Mark all tests in this file as asyncio
 pytestmark = pytest.mark.asyncio
 
+
 async def test_read_root():
     """Тестирует корневой эндпоинт."""
     async with AsyncClient(app=app, base_url="http://test") as ac:
         response = await ac.get("/")
     assert response.status_code == 200
-    assert response.json() == {"message": "Welcome to the Data Ingestion API for Mnemosyne Core"}
+    assert response.json() == {
+        "message": "Welcome to the Data Ingestion API for Mnemosyne Core"
+    }
+
 
 async def test_upload_memory_success():
     """Тестирует успешную загрузку файла."""
@@ -28,10 +32,11 @@ async def test_upload_memory_success():
     assert response_json["content_type"] == "text/plain"
     assert response_json["message"] == "File uploaded successfully"
 
+
 async def test_upload_memory_no_file():
     """Тестирует случай, когда файл не был отправлен."""
     async with AsyncClient(app=app, base_url="http://test") as ac:
-        response = await ac.post("/upload/") # Файл не прикреплен
+        response = await ac.post("/upload/")  # Файл не прикреплен
 
     # FastAPI должен вернуть ошибку 422 Unprocessable Entity
     assert response.status_code == 422
