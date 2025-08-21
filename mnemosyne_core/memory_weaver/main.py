@@ -11,6 +11,7 @@ from .graph_db import GraphDB
 from .nlp import NLPProcessor
 from .economic_core import wallet
 from .config import economic_config
+from .eidolon_gateway import EidolonGateway, ResourceNotFound
 
 # Create the Strawberry GraphQL schema
 schema = strawberry.Schema(query=Query)
@@ -88,6 +89,24 @@ async def hypothesize(request: HypothesizeRequest):
     db.close()
     wallet.debit(cost)
     return {"hypotheses": hypotheses}
+
+class PurchaseRequest(BaseModel):
+    resource_id: str
+
+@app.post("/eidolon/purchase", tags=["Eidolon Gateway"])
+async def purchase_resource(request: PurchaseRequest):
+    """
+    Allows the agent to purchase an external resource.
+    """
+    gateway = EidolonGateway()
+    try:
+        success = gateway.purchase_resource(request.resource_id, wallet)
+        if success:
+            return {"message": f"Resource '{request.resource_id}' purchased successfully."}
+        else:
+            raise HTTPException(status_code=402, detail="Payment Required. Insufficient funds.")
+    except ResourceNotFound as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 class CreditRequest(BaseModel):
     amount: float
