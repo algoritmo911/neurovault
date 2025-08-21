@@ -1,6 +1,7 @@
 import strawberry
+from strawberry.scalars import JSON
 from .graph_db import GraphDB
-from typing import List, Optional
+from typing import List, Optional, Any
 
 @strawberry.type
 class Entity:
@@ -14,6 +15,7 @@ class RelatedEntity:
     name: str
     labels: List[str]
     relationship: str
+    properties: Optional[JSON]
 
 @strawberry.type
 class Query:

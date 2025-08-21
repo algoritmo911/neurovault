@@ -22,25 +22,28 @@ class GraphDB:
         if self.driver:
             self.driver.close()
 
-    def add_entity(self, name: str, label: str):
+    def add_entity(self, name: str, label: str, properties: dict = None):
         """
-        Adds a new entity node to the graph.
+        Adds a new entity node to the graph, with optional properties.
 
         Args:
             name (str): The name of the entity.
             label (str): The label of the entity (e.g., "Person", "Organization").
+            properties (dict, optional): A dictionary of properties for the entity.
         """
         with self.driver.session() as session:
-            session.execute_write(self._create_entity, name, label)
+            session.execute_write(self._create_entity, name, label, properties)
 
     @staticmethod
-    def _create_entity(tx, name, label):
+    def _create_entity(tx, name, label, properties):
         query = f"MERGE (e:{label} {{name: $name}})"
-        tx.run(query, name=name)
+        if properties:
+            query += " SET e += $properties"
+        tx.run(query, name=name, properties=properties or {})
 
-    def add_relationship(self, source_name: str, source_label: str, target_name: str, target_label: str, relationship_type: str):
+    def add_relationship(self, source_name: str, source_label: str, target_name: str, target_label: str, relationship_type: str, properties: dict = None):
         """
-        Creates a relationship between two entities in the graph.
+        Creates a relationship between two entities in the graph, with optional properties.
 
         Args:
             source_name (str): The name of the source entity.
@@ -48,6 +51,7 @@ class GraphDB:
             target_name (str): The name of the target entity.
             target_label (str): The label of the target entity.
             relationship_type (str): The type of the relationship (e.g., "MENTIONED_IN").
+            properties (dict, optional): A dictionary of properties for the relationship.
         """
         with self.driver.session() as session:
             session.execute_write(
@@ -56,17 +60,20 @@ class GraphDB:
                 source_label,
                 target_name,
                 target_label,
-                relationship_type
+                relationship_type,
+                properties
             )
 
     @staticmethod
-    def _create_relationship(tx, source_name, source_label, target_name, target_label, relationship_type):
+    def _create_relationship(tx, source_name, source_label, target_name, target_label, relationship_type, properties):
         query = (
             f"MATCH (a:{source_label} {{name: $source_name}}) "
             f"MATCH (b:{target_label} {{name: $target_name}}) "
             f"MERGE (a)-[r:{relationship_type}]->(b)"
         )
-        tx.run(query, source_name=source_name, target_name=target_name)
+        if properties:
+            query += " SET r += $properties"
+        tx.run(query, source_name=source_name, target_name=target_name, properties=properties or {})
 
     def find_entity(self, name: str, label: str):
         """
@@ -94,10 +101,15 @@ class GraphDB:
     def _get_related_entities(tx, name, label):
         query = (
             f"MATCH (a:{label} {{name: $name}})-[r]-(b) "
-            "RETURN b.name AS name, labels(b) AS labels, type(r) AS relationship"
+            "RETURN b.name AS name, labels(b) AS labels, type(r) AS relationship, properties(r) as properties"
         )
         result = tx.run(query, name=name)
-        return [{"name": record["name"], "labels": record["labels"], "relationship": record["relationship"]} for record in result]
+        return [{
+            "name": record["name"],
+            "labels": record["labels"],
+            "relationship": record["relationship"],
+            "properties": record["properties"]
+        } for record in result]
 
 # Example usage (for testing purposes)
 if __name__ == "__main__":

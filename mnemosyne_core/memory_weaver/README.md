@@ -1,10 +1,17 @@
-# MemoryWeaver Service
+# MemoryWeaver Service & Logos Protocol
 
 ## Overview
 
 The MemoryWeaver is a central service in the Mnemosyne Core project, responsible for creating and maintaining a unified knowledge graph. It ingests data from various sources, uses Natural Language Processing (NLP) to extract entities and concepts, and stores them in a Neo4j graph database.
 
-The service provides a powerful GraphQL API to query the knowledge graph, allowing other components like Katana to perform semantic searches and uncover relationships between different pieces of information.
+This service implements the **Logos Protocol**, which extends it beyond simple data storage into a dynamic **reasoning engine**.
+
+## Core Concepts of the Logos Protocol
+
+*   **Temporal & Probabilistic Graph**: Facts are not just true or false; they exist in time and with varying degrees of confidence.
+*   **Syllogist (Inference Engine)**: The service can reason about its knowledge, inferring new facts from existing ones based on a set of rules.
+*   **Inquisitor (Contradiction Detector)**: An "intellectual immune system" that checks new information for contradictions before it is committed to the graph.
+*   **Oracle (Hypothesis Generator)**: Allows asking complex, open-ended questions to generate plausible hypotheses based on graph traversals.
 
 ## Setup
 
@@ -46,51 +53,118 @@ The API will be available at `http://127.0.0.1:8000`.
 
 ## API Usage
 
-### Data Ingestion
+The MemoryWeaver API provides several endpoints for interacting with the knowledge graph.
 
-You can add new information to the knowledge graph by sending a POST request to the `/ingest/` endpoint.
+### 1. Data Ingestion (`/ingest/`)
 
-**Example using `curl`:**
+This endpoint is used to add new information to the graph. It accepts raw text and optional structured properties.
+
+**Basic Ingestion:**
+```bash
+curl -X POST "http://127.0.0.1:8000/ingest/" \
+-H "Content-Type: application/json" \
+-d '{
+  "text": "The project uses Python.",
+  "source": "manual_entry"
+}'
+```
+
+**Ingestion with Temporal and Probabilistic Data:**
+You can add metadata to facts using the `properties` field.
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/ingest/" \
 -H "Content-Type: application/json" \
 -d '{
-  "text": "I had a meeting with Elon Musk to discuss the future of AI and space exploration.",
-  "source": "sapiens_note_123"
+  "text": "Anna started working on Project Apollo.",
+  "source": "project_log_123",
+  "properties": {
+    "confidence_score": 0.95,
+    "valid_from": "2023-01-15T09:00:00Z"
+  }
 }'
 ```
 
-### GraphQL API
+### 2. Inference Engine (`/syllogist/run/`)
 
-The GraphQL endpoint is available at `http://127.0.0.1:8000/graphql`. You can use any GraphQL client (like Postman or Insomnia) or access the interactive Strawberry documentation at the same URL in your browser.
+Trigger a run of the Syllogist inference engine to derive new knowledge based on the rules in `rules.yaml`.
 
-**Example Query: Find related entities**
+```bash
+curl -X POST "http://127.0.0.1:8000/syllogist/run/"
+```
+*Response: `{"message": "Syllogist inference run completed."}`*
 
-This query finds all entities related to the "AI" concept, which was ingested in the previous example.
+#### Syllogist Rule Format
 
+Rules are defined in `rules.yaml`. They consist of `if` conditions (patterns to match) and a `then` clause (the new relationship to create).
+
+**Example Rule:**
+```yaml
+- name: "Skill Inference from Project"
+  description: "If a person works on a project, and that project uses a certain technology, infer that the person has a skill in that technology."
+  if:
+    - "(person:Person)-[:WORKS_ON]->(project:Project)"
+    - "(project)-[:USES_TECH]->(tech:Concept)"
+  then:
+    - create: "(person)-[r:HAS_SKILL]->(tech)"
+      properties:
+        inferred: true
+        confidence_score: 0.85
+        source: "Syllogist - Skill Inference from Project"
+```
+
+### 3. Hypothesis Generation (`/hypothesize/`)
+
+Ask the Oracle an open-ended question to generate hypotheses.
+
+```bash
+curl -X POST "http://127.0.0.1:8000/hypothesize/" \
+-H "Content-Type: application/json" \
+-d '{
+  "question": "Why are there potential issues with Project X?"
+}'
+```
+**Example Response:**
+```json
+{
+  "hypotheses": [
+    "Hypothesis: A path exists from 'Project X' -> -[DEPENDS_ON]-> 'API Y', where API Y has notable properties: {'name': 'API Y', 'status': 'deprecated'}.",
+    "Hypothesis: A path exists from 'Project X' -> -[HAS_LEAD]-> 'Person A', where Person A has notable properties: {'name': 'Person A', 'stress_level': 'high'}."
+  ]
+}
+```
+
+### 4. GraphQL API (`/graphql`)
+
+The GraphQL endpoint provides powerful querying capabilities, including retrieving the new metadata.
+
+**Example Query:**
+This query finds entities related to "Project Apollo" and retrieves the properties of the relationships.
 ```graphql
 query {
-  getRelatedEntities(name: "AI", label: "Concept") {
+  getRelatedEntities(name: "Project Apollo", label: "Project") {
     name
     labels
     relationship
+    properties
   }
 }
 ```
 
 **Example Response:**
-
 ```json
 {
   "data": {
     "getRelatedEntities": [
       {
-        "name": "sapiens_note_123",
-        "labels": [
-          "Source"
-        ],
-        "relationship": "CONTAINS"
+        "name": "Anna",
+        "labels": ["Person"],
+        "relationship": "WORKS_ON",
+        "properties": {
+          "source": "project_log_123",
+          "confidence_score": 0.95,
+          "valid_from": "2023-01-15T09:00:00Z"
+        }
       }
     ]
   }

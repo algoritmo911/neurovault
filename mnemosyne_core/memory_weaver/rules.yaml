@@ -1,0 +1,25 @@
+- name: "Skill Inference from Project"
+  description: "If a person works on a project, and that project uses a certain technology, infer that the person has a skill in that technology."
+  if:
+    - "(person:Person)-[:WORKS_ON]->(project:Project)"
+    - "(project)-[:USES_TECH]->(tech:Concept)"
+  then:
+    - create: "(person)-[:HAS_SKILL]->(tech)"
+      properties:
+        inferred: true
+        confidence_score: 0.85
+        source: "Syllogist - Skill Inference from Project"
+
+- name: "Transitive Relationship Inference"
+  description: "If A is located in B, and B is located in C, infer that A is located in C."
+  if:
+    - "(a:Location)-[:LOCATED_IN]->(b:Location)"
+    - "(b)-[:LOCATED_IN]->(c:Location)"
+  where:
+    - "a <> c" # Ensure we don't create self-referential loops
+  then:
+    - create: "(a)-[:LOCATED_IN]->(c)"
+      properties:
+        inferred: true
+        confidence_score: 0.98 # High confidence for transitive locations
+        source: "Syllogist - Transitive Location Inference"

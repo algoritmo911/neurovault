@@ -1,16 +1,37 @@
 from .graph_db import GraphDB
 from .nlp import NLPProcessor
+from .inquisitor import Inquisitor
 
-def process_text_input(text: str, source: str = "text_input"):
+def process_text_input(text: str, source: str = "text_input", properties: dict = None):
     """
     Processes raw text, extracts entities and concepts, and stores them in the graph.
 
     Args:
         text (str): The raw text to process.
         source (str): The source of the information (e.g., "sapiens_note", "katana_log").
+        properties (dict, optional): A dictionary of properties for the relationships.
     """
     db = GraphDB()
+    inquisitor = Inquisitor(db)
     nlp = NLPProcessor()
+    properties = properties or {}
+    properties['source'] = source  # Ensure the source is always in the properties
+
+    # --- Inquisitor Check ---
+    # In a real system, a more sophisticated pre-processing step would
+    # extract structured facts. For now, we simulate this by checking
+    # for a special 'fact' key in the properties.
+    if 'fact' in properties and len(properties['fact']) == 3:
+        subj, pred, obj = properties['fact']
+        # For simplicity, we assume the labels are the same as the variable names capitalized.
+        # e.g., 'person' -> 'Person'
+        subj_label = subj.capitalize()
+        obj_label = obj.capitalize()
+
+        contradiction = inquisitor.check_for_contradictions(subj, subj_label, pred, obj)
+        if contradiction:
+            print(f"Ingestion halted due to contradiction: {contradiction}")
+            return # Halt processing
 
     try:
         # Extract entities and concepts
@@ -23,14 +44,14 @@ def process_text_input(text: str, source: str = "text_input"):
         # Add entities to the graph and link them to the source
         for entity_text, entity_label in entities:
             db.add_entity(entity_text, entity_label)
-            db.add_relationship(entity_text, entity_label, source, "Source", "MENTIONED_IN")
+            db.add_relationship(entity_text, entity_label, source, "Source", "MENTIONED_IN", properties=properties)
 
         # Add concepts to the graph and link them to the source
         for concept_text in concepts:
             db.add_entity(concept_text, "Concept")
-            db.add_relationship(concept_text, "Concept", source, "Source", "CONTAINS")
+            db.add_relationship(concept_text, "Concept", source, "Source", "CONTAINS", properties=properties)
 
-        print(f"Processed text from source '{source}' and updated the graph.")
+        print(f"Processed text from source '{source}' and updated the graph with properties: {properties}")
 
     finally:
         db.close()
