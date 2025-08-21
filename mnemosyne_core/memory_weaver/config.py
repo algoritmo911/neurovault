@@ -10,3 +10,14 @@ class Neo4jConfig:
 
 # Instantiate the config
 neo4j_config = Neo4jConfig()
+
+class EconomicConfig:
+    """
+    Configuration for the economic model of the agent.
+    Defines the cost for various actions.
+    """
+    COST_INGEST = 1.0
+    COST_SYLLOGIST_RUN = 25.0
+    COST_HYPOTHESIZE = 5.0
+
+economic_config = EconomicConfig()
