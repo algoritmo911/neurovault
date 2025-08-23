@@ -1,9 +1,9 @@
 import pytest
 import os
 from fastapi.testclient import TestClient
-from mnemosyne_core.memory_weaver.main import app
-from mnemosyne_core.memory_weaver.economic_core import Wallet, wallet
-from mnemosyne_core.memory_weaver.config import economic_config
+from janus_protocol.components.memory_weaver.main import app
+from janus_protocol.components.memory_weaver.economic_core import Wallet, wallet
+from janus_protocol.components.memory_weaver.config import economic_config
 
 WALLET_FILE = 'wallet.dat'
 

@@ -1,7 +1,7 @@
 import pytest
 import yaml
-from mnemosyne_core.memory_weaver.graph_db import GraphDB
-from mnemosyne_core.memory_weaver.syllogist import Syllogist
+from janus_protocol.components.memory_weaver.graph_db import GraphDB
+from janus_protocol.components.memory_weaver.syllogist import Syllogist
 
 @pytest.fixture(scope="module")
 def db():

@@ -2,9 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 import datetime
 
-from mnemosyne_core.memory_weaver.main import app
-from mnemosyne_core.memory_weaver.nlp import NLPProcessor
-from mnemosyne_core.memory_weaver.graph_db import GraphDB
+from janus_protocol.components.memory_weaver.main import app
+from janus_protocol.components.memory_weaver.nlp import NLPProcessor
+from janus_protocol.components.memory_weaver.graph_db import GraphDB
 
 # -- NLP Tests --
 

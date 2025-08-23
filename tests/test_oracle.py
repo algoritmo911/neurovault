@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
-from mnemosyne_core.memory_weaver.graph_db import GraphDB
-from mnemosyne_core.memory_weaver.main import app
+from janus_protocol.components.memory_weaver.graph_db import GraphDB
+from janus_protocol.components.memory_weaver.main import app
 
 @pytest.fixture(scope="module")
 def db():

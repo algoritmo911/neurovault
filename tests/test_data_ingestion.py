@@ -1,6 +1,6 @@
 import pytest
 from httpx import AsyncClient
-from mnemosyne_core.data_ingestion.main import app
+from janus_protocol.components.memory_weaver.data_ingestion.main import app
 import io
 
 # Mark all tests in this file as asyncio
