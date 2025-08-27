@@ -1,0 +1,5 @@
+# NATS client for subscribing to events
+nats-py==2.3.0
+
+# OpenAI client for LLM integration
+openai==1.12.0
