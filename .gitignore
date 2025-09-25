@@ -1,0 +1,10 @@
+# Database files
+*.db
+*.sqlite3
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Local environment files
+.env
